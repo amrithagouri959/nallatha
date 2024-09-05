@@ -1,0 +1,190 @@
+{% extends 'emp/base.html' %}
+{% load static %}
+{% block title %}Select Employee - {{ block.super }}{% endblock %}
+
+{% block content %}
+<style>
+    .employee-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+    }
+
+    .employee-card h5 {
+        margin-bottom: 10px;
+        color: blue;
+    }
+
+    .employee-card img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        cursor: pointer;
+    }
+
+    .status-button {
+        margin-top: 10px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: default;
+    }
+
+    .active {
+        background-color: green;
+    }
+
+    .inactive {
+        background-color: red;
+    }
+
+    /* Virtual keyboard container styling */
+    #keyboard-container {
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Select Your Profile</h2>
+    <div class="row justify-content-center">
+        {% for employee in employees %}
+        <div class="col-md-2 col-sm-4 text-center mb-4 employee-card">
+            <h5>{{ employee.name }}</h5>
+            {% if employee.photo %}
+            <img src="{{ employee.photo.url }}" alt="{{ employee.name }}" data-bs-toggle="modal" data-bs-target="#passwordModal" onclick="setEmployee('{{ employee.username }}')">
+            {% else %}
+            <img src="{% static 'default_profile.png' %}" alt="{{ employee.name }}" data-bs-toggle="modal" data-bs-target="#passwordModal" onclick="setEmployee('{{ employee.username }}')">
+            {% endif %}
+            {% if employee.is_active %}
+            <div class="status-button active">Active</div>
+            {% else %}
+            <div class="status-button inactive">Inactive</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Log In</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Login form with virtual keyboard integration -->
+            <form method="POST" action="{% url 'emp:employee_selection' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                    </div>
+                    <div id="keyboard-container"></div> <!-- Container for the virtual keyboard -->
+                    <!-- Display error messages if any -->
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="text-danger" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Virtual keyboard integration -->
+<script src="https://unpkg.com/simple-keyboard@latest/build/index.js"></script>
+<script>
+    let currentInput = "username"; // Track the active input field
+
+    // Initialize the virtual keyboard
+    const keyboard = new SimpleKeyboard.default({
+        onChange: input => {
+            document.getElementById(currentInput).value = input;
+        },
+        onKeyPress: button => {
+            handleSpecialKeys(button);
+        },
+        layout: {
+            default: [
+                "1 2 3 4 5 6 7 8 9 0 - = {bksp}",
+                "q w e r t y u i o p [ ] \\",
+                "a s d f g h j k l ; ' {enter}",
+                "z x c v b n m , . / {shift}",
+                "{space} {shift} {symbols} {numbers}"
+            ],
+            shift: [
+                "! @ # $ % ^ & * ( ) _ + {bksp}",
+                "Q W E R T Y U I O P { } |",
+                "A S D F G H J K L : \" {enter}",
+                "Z X C V B N M < > ? {shift}",
+                "{space} {shift} {symbols} {numbers}"
+            ],
+            symbols: [
+                "~ ` @ # $ % ^ & * ( ) _ + {bksp}",
+                "{ } [ ] | ; : ' \" , . / ? {enter}",
+                "< > \\ / {space} {shift} {letters}"
+            ],
+            numbers: [
+                "1 2 3 4 5 6 7 8 9 0",
+                "{letters} {bksp}"
+            ]
+        },
+        display: {
+            "{bksp}": "⌫",
+            "{enter}": "⏎",
+            "{shift}": "⇧",
+            "{space}": "␣",
+            "{symbols}": "Symbols",
+            "{numbers}": "Numbers",
+            "{letters}": "Letters"
+        }
+    });
+
+    // Function to handle special keys
+    function handleSpecialKeys(button) {
+        if (button === "{bksp}") {
+            let inputElement = document.getElementById(currentInput);
+            inputElement.value = inputElement.value.slice(0, -1); // Remove last character
+        }
+    }
+
+    // Function to set the current input field
+    function setEmployee(username) {
+        document.getElementById('username').value = username;
+        currentInput = "password"; // Focus on the password field after employee selection
+        keyboard.setInput(''); // Reset keyboard input
+    }
+
+    document.getElementById("password").addEventListener("focus", function () {
+        currentInput = "password";
+        keyboard.setInput(document.getElementById("password").value);
+    });
+
+    document.getElementById("username").addEventListener("focus", function () {
+        currentInput = "username";
+        keyboard.setInput(document.getElementById("username").value);
+    });
+
+    // Render the keyboard inside the container
+    document.getElementById("keyboard-container").appendChild(keyboard.keyboardDOM);
+</script>
+
+{% endblock %}

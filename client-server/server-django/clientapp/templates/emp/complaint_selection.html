@@ -1,0 +1,57 @@
+{% extends 'emp/base.html' %}
+{% block title %}Page M{{page_id}}{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1>You selected M{{ page_id }}</h1>
+   
+    <div class="mt-4">
+        <!-- Dropdown for selecting a complaint -->
+        <label for="complaintDropdown" class="form-label">Select a Complaint</label>
+        <select id="complaintDropdown" class="form-select" aria-label="Select a Complaint">
+            <option value="" selected>Select a complaint...</option>
+            <option value="complaint1">Complaint 1</option>
+            <option value="complaint2">Complaint 2</option>
+            <option value="complaint3">Complaint 3</option>
+            <!-- Add more complaints as needed -->
+        </select>
+    </div>
+   
+    <!-- Modal for confirmation -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm Selection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to proceed with the selected complaint?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmButton">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap JS and CSS for modal functionality -->
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.getElementById('complaintDropdown').addEventListener('change', function() {
+        if (this.value) {
+            var confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            confirmationModal.show();
+        }
+    });
+
+    document.getElementById('confirmButton').addEventListener('click', function() {
+        // Redirect to the dashboard or any other URL
+        window.location.href = '{%url 'emp:dashboard' %}'; // Replace "dashboard" with your actual dashboard URL name
+    });
+</script>
+{% endblock %}
